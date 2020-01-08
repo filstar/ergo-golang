@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/blake2b"
 
-	utils "ergo-golang/pkg/utils"
+	utils "github.com/zhiganov-andrew/ergo-golang/pkg/utils"
 )
 
 func MakeBlake2bHash(source []byte) *big.Int {

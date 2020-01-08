@@ -1,4 +1,4 @@
-module ergo-golang
+module github.com/zhiganov-andrew/ergo-golang
 
 go 1.13
 

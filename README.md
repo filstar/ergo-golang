@@ -6,7 +6,7 @@
 
 ```golang
 import (
-	"github.com/ergo-golang/pkg/transaction"
+	"github.com/zhiganov-andrew/ergo-golang/pkg/transaction"
 )
 
 func main() {
