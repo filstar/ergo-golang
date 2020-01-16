@@ -16,32 +16,37 @@ import (
 
 const MinerErgoTree = "1005040004000e36100204a00b08cd0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ea02d192a39a8cc7a701730073011001020402d19683030193a38cc7b2a57300000193c2b2a57301007473027303830108cdeeac93b1a57304"
 
+type TxOutput struct {
+	Address string
+	Amount  int64
+}
+
 type Blocks struct {
 	Items []Block `json:"items"`
-	Total uint64  `json:"total"`
+	Total int64   `json:"total"`
 }
 
 type Block struct {
 	Id                string `json:"id"`
-	Height            uint64 `json:"height"`
-	TransactionsCount uint64 `json:"transactionsCount"`
+	Height            int64  `json:"height"`
+	TransactionsCount int64  `json:"transactionsCount"`
 }
 
 type Asset struct {
 	TokenId string `json:"tokenId"`
-	Amount  uint64 `json:"amount"`
+	Amount  int64  `json:"amount"`
 }
 
 type Box struct {
 	Id     string `json:"id"`
-	Amount uint64 `json:"value"`
+	Amount int64  `json:"value"`
 	sk     string
 	Assets []Asset `json:"assets"`
 }
 
 type Outputs struct {
 	Address string  `json:"address"`
-	Amount  uint64  `json:"amount"`
+	Amount  int64   `json:"amount"`
 	Assets  []Asset `json:"assets"`
 }
 
@@ -55,8 +60,8 @@ type TransactionOutput struct {
 	ErgoTree            string         `json:"ergoTree"`
 	Assets              []Asset        `json:"assets"`
 	AdditionalRegisters AdditionalRegs `json:"additionalRegisters"`
-	Value               uint64         `json:"value"`
-	CreationHeight      uint64         `json:"creationHeight"`
+	Value               int64          `json:"value"`
+	CreationHeight      int64          `json:"creationHeight"`
 }
 
 type TransactionInput struct {
@@ -70,20 +75,27 @@ type TransactionInput struct {
 type Extension struct{}
 type AdditionalRegs struct{}
 
-func createOutputs(recipient string, amount uint64, fee uint64, boxesToSpend []Box, chargeAddress string) ([]Outputs, error) {
-	var globalValue uint64 = 0
+func createOutputs(recipientOutputs []TxOutput, fee int64, boxesToSpend []Box, chargeAddress string) ([]Outputs, error) {
+	var globalValue int64 = 0
 	for _, box := range boxesToSpend {
 		globalValue = globalValue + box.Amount
 	}
 
 	boxAssets := getAssetsFromBoxes(boxesToSpend)
-	chargeAmount := globalValue - amount - fee
+	chargeAmount := globalValue - fee
+	for _, output := range recipientOutputs {
+		if output.Amount > 0 {
+			chargeAmount -= output.Amount
+		}
+	}
 
 	outputs := make([]Outputs, 0)
-	outputs = append(outputs, Outputs{Address: recipient, Amount: amount, Assets: []Asset{}})
+	for _, output := range recipientOutputs {
+		outputs = append(outputs, Outputs{Address: output.Address, Amount: output.Amount, Assets: []Asset{}})
+	}
 
 	if chargeAmount > 0 {
-		outputs = append(outputs, Outputs{Address: chargeAddress, Amount: globalValue - amount - fee, Assets: boxAssets})
+		outputs = append(outputs, Outputs{Address: chargeAddress, Amount: chargeAmount, Assets: boxAssets})
 	} else if chargeAmount < 0 || len(boxAssets) > 0 {
 		return nil, errors.New("Not enough ERGS")
 	}
@@ -104,7 +116,7 @@ func getAssetsFromBoxes(boxesToSpend []Box) []Asset {
 	return []Asset{}
 }
 
-func SendTransaction(recipient string, amount uint64, fee uint64, sk string, testNet bool) (interface{}, error) {
+func SendTransaction(recipientOutputs []TxOutput, fee int64, sk string, testNet bool) (interface{}, error) {
 	chargeAddress := crypto.GetAddressFromSK(sk, testNet)
 	addressBoxes, _ := restAPI.GetBoxesFromAddress(chargeAddress, testNet)
 	var boxes []Box
@@ -117,7 +129,14 @@ func SendTransaction(recipient string, amount uint64, fee uint64, sk string, tes
 		boxes[ind].sk = sk
 	}
 
-	resolvedBoxes, err := getSolvingBoxes(boxes, amount, fee)
+	var totalAmount int64 = 0
+	for _, output := range recipientOutputs {
+		if output.Amount > 0 {
+			totalAmount += output.Amount
+		}
+	}
+
+	resolvedBoxes, err := getSolvingBoxes(boxes, totalAmount, fee)
 	if err != nil {
 		return nil, errors.New("Insufficient funds")
 	}
@@ -129,11 +148,11 @@ func SendTransaction(recipient string, amount uint64, fee uint64, sk string, tes
 	}
 	blockHeight := blocks.Items[0].Height
 
-	return sendFullTransaction(recipient, amount, fee, resolvedBoxes, chargeAddress, blockHeight, testNet)
+	return sendFullTransaction(recipientOutputs, fee, resolvedBoxes, chargeAddress, blockHeight, testNet)
 }
 
-func sendFullTransaction(recipient string, amount uint64, fee uint64, resolveBoxes []Box, chargeAddress string, blockHeight uint64, testNet bool) (interface{}, error) {
-	signedTransaction := formTransaction(recipient, amount, fee, resolveBoxes, chargeAddress, blockHeight)
+func sendFullTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []Box, chargeAddress string, blockHeight int64, testNet bool) (interface{}, error) {
+	signedTransaction := formTransaction(recipientOutputs, fee, resolveBoxes, chargeAddress, blockHeight)
 
 	msg, err := json.Marshal(&signedTransaction)
 	if err != nil {
@@ -147,8 +166,8 @@ func sendFullTransaction(recipient string, amount uint64, fee uint64, resolveBox
 	return signedTransaction, nil
 }
 
-func formTransaction(recipient string, amount uint64, fee uint64, resolveBoxes []Box, chargeAddress string, blockHeight uint64) Transaction {
-	outputs, _ := createOutputs(recipient, amount, fee, resolveBoxes, chargeAddress)
+func formTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []Box, chargeAddress string, blockHeight int64) Transaction {
+	outputs, _ := createOutputs(recipientOutputs, fee, resolveBoxes, chargeAddress)
 	signedTransaction := CreateTransaction(resolveBoxes, outputs, fee, blockHeight)
 
 	return signedTransaction
@@ -160,7 +179,7 @@ func MakeErgoTree(address string) string {
 	return hex.EncodeToString(tree)
 }
 
-func CreateTransaction(resolveBoxes []Box, outputs []Outputs, fee uint64, blockHeight uint64) Transaction {
+func CreateTransaction(resolveBoxes []Box, outputs []Outputs, fee int64, blockHeight int64) Transaction {
 	var unsignedTransaction Transaction
 
 	unsignedTransaction.DataInputs = make([]string, 0) // dataInputs == []
@@ -226,10 +245,10 @@ func inputBytes(input TransactionInput) []byte {
 }
 
 func outputBytes(output TransactionOutput) []byte {
-	res := utils.IntToVlq(output.Value)
+	res := utils.IntToVlq(uint64(output.Value))
 	ergoTreeBytes, _ := hex.DecodeString(output.ErgoTree)
 	res = append(res, ergoTreeBytes...)
-	res = append(res, utils.IntToVlq(output.CreationHeight)...)
+	res = append(res, utils.IntToVlq(uint64(output.CreationHeight))...)
 	res = append(res, utils.IntToVlq(uint64(len(output.Assets)))...)
 
 	res = append(res, utils.IntToVlq(uint64(0))...)
@@ -256,8 +275,8 @@ func serializeTx(tx Transaction) []byte {
 	return res
 }
 
-func getSolvingBoxes(boxes []Box, amount uint64, fee uint64) ([]Box, error) {
-	var boxesCollValue uint64 = 0
+func getSolvingBoxes(boxes []Box, amount int64, fee int64) ([]Box, error) {
+	var boxesCollValue int64 = 0
 	var hasBoxes bool = false
 	solvingBoxes := make([]Box, 0)
 	sortedBoxes := sortBoxes(boxes)
