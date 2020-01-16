@@ -158,8 +158,6 @@ func sendFullTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []
 	if err != nil {
 		return nil, fmt.Errorf("can't marshall tx: %w", err)
 	}
-	//fmt.Println("signedTransaction")
-	//fmt.Println(signedTransaction)
 
 	restAPI.SendTx(msg, testNet)
 
@@ -185,7 +183,6 @@ func CreateTransaction(resolveBoxes []Box, outputs []Outputs, fee int64, blockHe
 	unsignedTransaction.DataInputs = make([]string, 0) // dataInputs == []
 
 	for _, output := range outputs {
-		fmt.Println(output.Address)
 		treeHex := MakeErgoTree(output.Address)
 		var transactionOutput TransactionOutput
 		transactionOutput.AdditionalRegisters = AdditionalRegs{}
@@ -219,12 +216,6 @@ func CreateTransaction(resolveBoxes []Box, outputs []Outputs, fee int64, blockHe
 	copier.Copy(&signedTransaction, &unsignedTransaction)
 
 	serializeTransaction := serializeTx(unsignedTransaction)
-
-	//fmt.Println("serializeTransaction")
-	//fmt.Println("serialized:", serializeTransaction)
-
-	//mbId := blake2b.Sum256(serializeTransaction)
-	//fmt.Println(hex.EncodeToString(mbId[:]))
 
 	for ind, _ := range signedTransaction.Inputs {
 		signBytes := crypto.Sign(serializeTransaction, resolveBoxes[ind].sk)

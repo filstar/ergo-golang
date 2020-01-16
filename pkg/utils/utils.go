@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math/big"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -16,7 +15,7 @@ func CheckAddressValidity(address string) bool {
 		return false
 	}
 	script := addressBytes[:(size - 4)]
-	checksum := addressBytes[(size - 4): size]
+	checksum := addressBytes[(size - 4):size]
 	calculatedChecksum := blake2b.Sum256(script)
 	return hex.EncodeToString(calculatedChecksum[0:4]) == hex.EncodeToString(checksum)
 }
@@ -58,7 +57,6 @@ func LongToVlq(long *big.Int) []byte {
 			r = 0
 		}
 
-		fmt.Println("R= ", r)
 		x = x.Div(x, temp.SetUint64(128))
 		res = append(res, (r | 0x80))
 	}
@@ -71,10 +69,6 @@ func LongToVlq(long *big.Int) []byte {
 	res = append(res, r)
 	return res
 }
-
-
-
-
 
 //func OutputBytes(out) {
 //	res := IntToVlq(out.value)
