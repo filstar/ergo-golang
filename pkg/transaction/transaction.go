@@ -147,6 +147,7 @@ func SendTransaction(recipientOutputs []TxOutput, fee int64, sk string, testNet 
 		return nil, errors.New("bad JSON unmarshalling")
 	}
 	blockHeight := blocks.Items[0].Height
+	blockHeight = 91347
 
 	return sendFullTransaction(recipientOutputs, fee, resolvedBoxes, chargeAddress, blockHeight, testNet)
 }
