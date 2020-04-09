@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/jinzhu/copier"
 
 	"github.com/zhiganov-andrew/ergo-golang/pkg/crypto"
@@ -206,9 +207,28 @@ func formTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []Box,
 }
 
 func MakeErgoTree(address string) string {
-	var ergoTreeBytes = []byte{0x00, 0x08, 0xcd}
-	tree := append(ergoTreeBytes, crypto.GetPKFromAddress(address)...)
-	return hex.EncodeToString(tree)
+	var addressBytes = base58.Decode(address)
+	if len(addressBytes) < 1 {
+		return ""
+	}
+
+	if (addressBytes[0] == 1) || (addressBytes[0] == 17) {
+		// It's P2PK address
+		var ergoTreeBytes = []byte{0x00, 0x08, 0xcd}
+
+		if len(addressBytes) < 34 {
+			return ""
+		}
+
+		return hex.EncodeToString(append(ergoTreeBytes, addressBytes[1:34]...))
+	} else {
+		// It's P2S script
+		if len(addressBytes) < 5 {
+			return ""
+		}
+
+		return hex.EncodeToString(addressBytes[1 : len(addressBytes)-4])
+	}
 }
 
 func CreateTransaction(resolveBoxes []Box, outputs []Outputs, fee int64, blockHeight int64) Transaction {
