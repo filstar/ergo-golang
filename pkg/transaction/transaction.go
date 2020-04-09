@@ -151,6 +151,40 @@ func SendTransaction(recipientOutputs []TxOutput, fee int64, sk string, testNet 
 	return sendFullTransaction(recipientOutputs, fee, resolvedBoxes, chargeAddress, blockHeight, testNet)
 }
 
+func SendTransactionWithNoProof(recipientOutputs []TxOutput, fee int64, scriptAddress string, changeAddress string, testNet bool) (interface{}, error) {
+	addressBoxes, _ := restAPI.GetBoxesFromAddress(scriptAddress, testNet)
+	var boxes []Box
+	err := json.Unmarshal(addressBoxes, &boxes)
+	if err != nil {
+		return nil, errors.New("bad JSON unmarshalling")
+	}
+
+	for ind, _ := range boxes {
+		boxes[ind].sk = ""
+	}
+
+	var totalAmount int64 = 0
+	for _, output := range recipientOutputs {
+		if output.Amount > 0 {
+			totalAmount += output.Amount
+		}
+	}
+
+	resolvedBoxes, err := getSolvingBoxes(boxes, totalAmount, fee)
+	if err != nil {
+		return nil, errors.New("Insufficient funds")
+	}
+	var blocks Blocks
+	response, _ := restAPI.GetCurrentHeight(testNet)
+	err = json.Unmarshal(response, &blocks)
+	if err != nil {
+		return nil, errors.New("bad JSON unmarshalling")
+	}
+	blockHeight := blocks.Items[0].Height
+
+	return sendFullTransaction(recipientOutputs, fee, resolvedBoxes, changeAddress, blockHeight, testNet)
+}
+
 func sendFullTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []Box, chargeAddress string, blockHeight int64, testNet bool) (interface{}, error) {
 	signedTransaction := formTransaction(recipientOutputs, fee, resolveBoxes, chargeAddress, blockHeight)
 
@@ -218,8 +252,10 @@ func CreateTransaction(resolveBoxes []Box, outputs []Outputs, fee int64, blockHe
 	serializeTransaction := serializeTx(unsignedTransaction)
 
 	for ind, _ := range signedTransaction.Inputs {
-		signBytes := crypto.Sign(serializeTransaction, resolveBoxes[ind].sk)
-		signedTransaction.Inputs[ind].SpendingProof.ProofBytes = hex.EncodeToString(signBytes)
+		if len(resolveBoxes[ind].sk) != 0 {
+			signBytes := crypto.Sign(serializeTransaction, resolveBoxes[ind].sk)
+			signedTransaction.Inputs[ind].SpendingProof.ProofBytes = hex.EncodeToString(signBytes)
+		}
 	}
 
 	return signedTransaction
