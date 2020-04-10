@@ -194,9 +194,9 @@ func sendFullTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []
 		return nil, fmt.Errorf("can't marshall tx: %w", err)
 	}
 
-	restAPI.SendTx(msg, testNet)
+	err = restAPI.SendTx(msg, testNet)
 
-	return signedTransaction, nil
+	return signedTransaction, err
 }
 
 func formTransaction(recipientOutputs []TxOutput, fee int64, resolveBoxes []Box, chargeAddress string, blockHeight int64) Transaction {
