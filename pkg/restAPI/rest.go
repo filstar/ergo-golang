@@ -58,5 +58,9 @@ func SendTx(msg []byte, testNet bool) error {
 	}
 	defer resp.Body.Close()
 
+	fmt.Println(resp.Status)
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
 	return nil
 }
