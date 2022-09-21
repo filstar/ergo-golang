@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/big"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/tyler-smith/go-bip32"
+	"github.com/tyler-smith/go-bip39"
 	utils "github.com/zhiganov-andrew/ergo-golang/pkg/utils"
 )
 
@@ -136,4 +139,16 @@ func Verify(msgBytes []byte, sigBytes []byte, pkBytes []byte) bool {
 	c2 := MakeBlake2bHash(s)
 
 	return c2.Cmp(c) == 0
+}
+
+func GetSKWithMnemonic(mnemonic, pass string) (string, string, error) {
+	//var mnemonic = "pepper hair process town say voyage exhibit over carry property follow define"
+	fmt.Println("mnemonic:", mnemonic)
+	seed := bip39.NewSeed(mnemonic, pass)
+	computerVoiceMasterKey, _ := bip32.NewMasterKey(seed)
+	key, err := computerVoiceMasterKey.NewChildKey(0)
+	if err != nil {
+		return "", "", err
+	}
+	return key.String(), key.PublicKey().String(), nil
 }
