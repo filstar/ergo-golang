@@ -141,14 +141,16 @@ func Verify(msgBytes []byte, sigBytes []byte, pkBytes []byte) bool {
 	return c2.Cmp(c) == 0
 }
 
-func GetSKWithMnemonic(mnemonic, pass string) (string, string, error) {
+func GetSKWithMnemonic(mnemonic, pass string) {
 	//var mnemonic = "pepper hair process town say voyage exhibit over carry property follow define"
 	fmt.Println("mnemonic:", mnemonic)
+	fmt.Println("pass:", pass)
 	seed := bip39.NewSeed(mnemonic, pass)
-	computerVoiceMasterKey, _ := bip32.NewMasterKey(seed)
-	key, err := computerVoiceMasterKey.NewChildKey(0)
-	if err != nil {
-		return "", "", err
-	}
-	return key.String(), key.PublicKey().String(), nil
+	fmt.Println(hex.EncodeToString(seed))
+	masterKey, _ := bip32.NewMasterKey(seed)
+	publicKey := masterKey.PublicKey()
+
+	// Display mnemonic and keys
+	fmt.Println("Master private key: ", masterKey)
+	fmt.Println("Master public key: ", publicKey)
 }
