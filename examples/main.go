@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	crypto.GetSKWithMnemonic("m/44'/429'/0'/0/2", "")
+	crypto.GetSKWithMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "TREZOR")
 	return
 	outputs := []transaction.TxOutput{
 		{
