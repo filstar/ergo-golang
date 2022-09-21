@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -160,5 +159,5 @@ func GetSKWithMnemonic(mnemonic, pass string) (string, string) {
 	fmt.Println(GetAddressFromPK(publicKey.Key, false))
 	fmt.Println("Master private key: ", k)
 	fmt.Println("Master private key: ", pk)
-	return base64.NewEncoding().EncodeToString(masterKey.Key), masterKey.String()
+	return base58.Encode(masterKey.Key), masterKey.String()
 }
