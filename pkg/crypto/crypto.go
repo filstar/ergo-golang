@@ -148,9 +148,13 @@ func GetSKWithMnemonic(mnemonic, pass string) {
 	seed := bip39.NewSeed(mnemonic, pass)
 	fmt.Println(hex.EncodeToString(seed))
 	masterKey, _ := bip32.NewMasterKey(seed)
+	k, _ := masterKey.NewChildKey(0)
 	publicKey := masterKey.PublicKey()
+	pk := k.PublicKey()
 
 	// Display mnemonic and keys
 	fmt.Println("Master private key: ", masterKey)
 	fmt.Println("Master public key: ", publicKey)
+	fmt.Println("Master private key: ", k)
+	fmt.Println("Master private key: ", pk)
 }
