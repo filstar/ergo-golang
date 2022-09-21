@@ -154,6 +154,7 @@ func GetSKWithMnemonic(mnemonic, pass string) {
 
 	// Display mnemonic and keys
 	fmt.Println("Master private key: ", masterKey)
+	fmt.Println("Master private key: ", base58.Encode(masterKey.Key))
 	fmt.Println("Master public key: ", publicKey)
 	fmt.Println("Master private key: ", k)
 	fmt.Println("Master private key: ", pk)
