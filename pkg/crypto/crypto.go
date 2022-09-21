@@ -157,6 +157,7 @@ func GetSKWithMnemonic(mnemonic, pass string) (string, string) {
 	fmt.Println("Master private key: ", base58.Encode(masterKey.Key))
 	fmt.Println("Master public key: ", publicKey)
 	fmt.Println(GetAddressFromPK(publicKey.Key, false))
+	fmt.Println(GetPKFromSK(masterKey.String()))
 	fmt.Println("Master private key: ", k)
 	fmt.Println("Master private key: ", pk)
 	return base58.Encode(masterKey.Key), masterKey.String()
