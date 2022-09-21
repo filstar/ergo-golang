@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"github.com/zhiganov-andrew/ergo-golang/pkg/crypto"
 	"github.com/zhiganov-andrew/ergo-golang/pkg/transaction"
 )
 
 func main() {
 	//crypto.GetSKWithMnemonic("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", "TREZOR")
-	crypto.GetSKWithMnemonic("edge talent poet tortoise trumpet dose", "")
+	bsk, sk := crypto.GetSKWithMnemonic("van impose hub swift ladder example celery two omit soft mobile very again pause satoshi", "")
+	fmt.Println(crypto.GetAddressFromSK(bsk, false))
+	fmt.Println(crypto.GetAddressFromSK(sk, false))
 	return
 	outputs := []transaction.TxOutput{
 		{

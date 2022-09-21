@@ -141,7 +141,7 @@ func Verify(msgBytes []byte, sigBytes []byte, pkBytes []byte) bool {
 	return c2.Cmp(c) == 0
 }
 
-func GetSKWithMnemonic(mnemonic, pass string) {
+func GetSKWithMnemonic(mnemonic, pass string) (string, string) {
 	//var mnemonic = "pepper hair process town say voyage exhibit over carry property follow define"
 	fmt.Println("mnemonic:", mnemonic)
 	fmt.Println("pass:", pass)
@@ -158,4 +158,5 @@ func GetSKWithMnemonic(mnemonic, pass string) {
 	fmt.Println("Master public key: ", publicKey)
 	fmt.Println("Master private key: ", k)
 	fmt.Println("Master private key: ", pk)
+	return base58.Encode(masterKey.Key), masterKey.String()
 }
